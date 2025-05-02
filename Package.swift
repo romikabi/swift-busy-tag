@@ -4,20 +4,33 @@ import PackageDescription
 
 let package = Package(
   name: "swift-busy-tag",
+  platforms: [.macOS(.v13)],
   products: [
     .library(
-      name: "swift-busy-tag",
-      targets: ["swift-busy-tag"]
+      name: "BusyTag",
+      targets: ["BusyTag"]
     ),
   ],
   dependencies: [
-    .package(url: "https://github.com/mredig/SwiftSerial.git", from: "0.1.5"),
+//    .package(url: "https://github.com/christophhagen/SwiftSerial.git", from: "1.1.0"),
+    .package(url: "https://github.com/armadsen/ORSSerialPort.git", from: "2.1.0"),
   ],
   targets: [
-    .target(name: "swift-busy-tag"),
+    .target(
+      name: "BusyTag",
+      dependencies: [
+//        .byName(name: "SwiftSerial"),
+        .product(name: "ORSSerial", package: "ORSSerialPort"),
+      ]),
     .testTarget(
-      name: "swift-busy-tag-tests",
-      dependencies: ["swift-busy-tag"]
+      name: "BusyTagTests",
+      dependencies: ["BusyTag"]
+    ),
+    .executableTarget(
+      name: "BusyTagSample",
+      dependencies: [
+        "BusyTag",
+      ]
     ),
   ]
 )

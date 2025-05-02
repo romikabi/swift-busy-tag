@@ -1,22 +1,13 @@
 {
-  "originHash" : "324c9b5c787828f9375aa56768d859e5238afa3e92d044b2f5124e2935791e49",
+  "originHash" : "bdb6c3616c558ebb3321a5a22c5a387cadda2b0231063bfe6e53a172eab1dc33",
   "pins" : [
     {
-      "identity" : "swift-argument-parser",
+      "identity" : "orsserialport",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-argument-parser.git",
+      "location" : "https://github.com/armadsen/ORSSerialPort.git",
       "state" : {
-        "revision" : "46989693916f56d1186bd59ac15124caef896560",
-        "version" : "1.3.1"
-      }
-    },
-    {
-      "identity" : "swiftserial",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mredig/SwiftSerial.git",
-      "state" : {
-        "revision" : "764bf55dc7667f665934ce69d63211471bf55b0f",
-        "version" : "0.1.5"
+        "revision" : "58a8cc454304e22280f184c2d2e25ecb3d5a74c5",
+        "version" : "2.1.0"
       }
     }
   ],
