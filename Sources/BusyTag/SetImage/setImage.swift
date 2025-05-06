@@ -1,12 +1,15 @@
+extension BusyTag {
+//  AT+SP=
+}
 import ORSSerial
 
 extension BusyTag {
-  public static func setColor(
-    _ color: String,
+  public static func setImage(
+    path: String,
     using port: ORSSerialPort
   ) async throws {
     _ = try await send(
-      fire: SetColor(color: color),
+      fire: SetImage(path: path),
       using: port
     )
   }
