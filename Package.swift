@@ -6,23 +6,22 @@ let package = Package(
   name: "swift-busy-tag",
   platforms: [.macOS(.v13)],
   products: [
-    .library(
-      name: "BusyTag",
-      targets: ["BusyTag"]
-    ),
+    .library(name: "BusyTag", targets: ["BusyTag"]),
+    .library(name: "Serial", targets: ["Serial"]),
   ],
   dependencies: [
     .package(url: "https://github.com/armadsen/ORSSerialPort.git", from: "2.1.0"),
   ],
   targets: [
     .target(
-      name: "BusyTag",
+      name: "Serial",
       dependencies: [
         .product(name: "ORSSerial", package: "ORSSerialPort"),
       ]),
-    .testTarget(
-      name: "BusyTagTests",
-      dependencies: ["BusyTag"]
-    ),
+    .target(
+      name: "BusyTag",
+      dependencies: [
+        "Serial",
+      ]),
   ]
 )
