@@ -5,7 +5,7 @@ extension BusyTag {
     _ color: String,
     using port: ORSSerialPort
   ) async throws {
-    _ = try await send(
+    try await send(
       fire: SetColor(color: color),
       using: port
     )
