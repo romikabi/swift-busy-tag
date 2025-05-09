@@ -1,11 +1,11 @@
-import ORSSerial
+import Foundation
 
 extension BusyTag {
-  public static func findVolumeURL(
-    path: some StringProtocol = "readme.txt",
-    contains regex: some RegexComponent = /Local link: http:\/\/busytag/,
+  public static func findURL(
     fileManager: FileManager = .default
-  ) -> URL? {
+  ) async throws -> URL? {
+    let path = "readme.txt"
+    let regex = /Local link: http:\/\/busytag/
     log("Looking for volume by matching \(regex) in \(path)")
     for volume in fileManager.mountedVolumeURLs(
       includingResourceValuesForKeys: [.pathKey], options: .skipHiddenVolumes
