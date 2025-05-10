@@ -1,25 +1,76 @@
 @preconcurrency import ORSSerial
 @preconcurrency import Combine
+@preconcurrency import Foundation
 import ConcurrencyExtras
 
-public final class ORSSerialDevice: Sendable, Device {
+public actor ORSSerialDevice: Sendable, Device {
   private let delegate = Delegate()
-  private let port: ORSSerialPort
+  private var observation: NSKeyValueObservation?
+  private var port: ORSSerialPort?
 
   public init(port: ORSSerialPort) {
     self.port = port
-    self.port.delegate = delegate
+    self.port?.delegate = delegate
+  }
+
+  public init(
+    pickPort: @escaping @Sendable (ORSSerialPortManager) async throws -> ORSSerialPort?,
+    manager: ORSSerialPortManager = .shared()
+  ) async {
+    do {
+      port = try await pickPort(manager)
+      port?.delegate = delegate
+    } catch {
+      log("Couldn't pick port: \(error)")
+    }
+    self.observation = manager.observe(\.availablePorts, options: [.new]) { [weak self] manager, change in
+      self?.portsChanged(pickPort: pickPort, manager: manager)
+    }
+  }
+
+  private nonisolated func portsChanged(
+    pickPort: @escaping @Sendable (ORSSerialPortManager) async throws -> ORSSerialPort?,
+    manager: ORSSerialPortManager
+  ) {
+    Task {
+      do {
+        try await isolatedPortsChanged(pickPort: pickPort, manager: manager)
+      } catch {
+        log("Couldn't pick port: \(error)")
+      }
+    }
+  }
+
+  private func isolatedPortsChanged(
+    pickPort: @escaping @Sendable (ORSSerialPortManager) async throws -> ORSSerialPort?,
+    manager: ORSSerialPortManager
+  ) async throws {
+    if let port {
+      if !manager.availablePorts.contains(port) {
+        port.delegate = nil
+        self.port = nil
+      }
+      return
+    }
+    port = try await pickPort(manager)
+    port?.delegate = delegate
+    log(#"picked \#(port?.path ?? "nil")"#)
+  }
+
+  private func setPort(_ port: ORSSerialPort) {
+    self.port = port
   }
 
   deinit {
-    port.close()
+    port?.close()
   }
 
   public func send(
-    _ string: some StringProtocol,
+    _ string: some StringProtocol & Sendable,
     expecting regex: NSRegularExpression,
     timeout: TimeInterval? = 1
   ) async throws -> String {
+    guard let port else { throw PortRemoved() }
     guard let requestData = string.data(using: .utf8) else {
       throw RequestToDataConversionFailed()
     }
@@ -47,6 +98,10 @@ public final class ORSSerialDevice: Sendable, Device {
         continuation.resume(throwing: RequestTimeout())
       }.store(in: &tokens)
 
+      delegate.serialPortDidEncounterError.first().sink { _, error in
+        continuation.resume(throwing: error)
+      }.store(in: &tokens)
+
       delegate.serialPortWasRemovedFromSystem.first().sink { _ in
         continuation.resume(throwing: PortRemoved())
       }.store(in: &tokens)
@@ -60,10 +115,11 @@ public final class ORSSerialDevice: Sendable, Device {
     return response
   }
 
-  public func subscribe(expecting regex: NSRegularExpression) -> any AsyncSequence<String, Error> {
+  nonisolated public func subscribe(expecting regex: NSRegularExpression) async throws -> any SendableAsyncSequence<String, Error> {
+    guard let port = await port else { throw PortRemoved() }
     let descriptor = ORSSerialPacketDescriptor(regularExpression: regex, maximumPacketLength: .max, userInfo: nil)
     var tokens = Set<AnyCancellable>()
-    return AsyncThrowingStream { [descriptor] continuation in
+    return AsyncThrowingStream<String, Error> { [descriptor] continuation in
       delegate.serialPortDidReceivePacket.filter { _, _, receivingDescriptor in
         descriptor == receivingDescriptor
       }.sink { _, data, _ in
@@ -89,11 +145,15 @@ public final class ORSSerialDevice: Sendable, Device {
   }
 
   public func open() async throws {
+    guard let port else { throw PortRemoved() }
     guard !port.isOpen else { return }
     var tokens = Set<AnyCancellable>()
     try await withCheckedThrowingContinuation { continuation in
       delegate.serialPortWasOpened.first().sink { _ in
         continuation.resume()
+      }.store(in: &tokens)
+      delegate.serialPortDidEncounterError.first().sink { _, error in
+        continuation.resume(throwing: error)
       }.store(in: &tokens)
       delegate.serialPortWasRemovedFromSystem.first().sink { _ in
         continuation.resume(throwing: PortRemoved())
@@ -104,11 +164,15 @@ public final class ORSSerialDevice: Sendable, Device {
   }
 
   public func close() async throws {
+    guard let port else { throw PortRemoved() }
     guard port.isOpen else { return }
     var tokens = Set<AnyCancellable>()
     try await withCheckedThrowingContinuation { continuation in
       delegate.serialPortWasClosed.first().sink { _ in
         continuation.resume()
+      }.store(in: &tokens)
+      delegate.serialPortDidEncounterError.first().sink { _, error in
+        continuation.resume(throwing: error)
       }.store(in: &tokens)
       delegate.serialPortWasRemovedFromSystem.first().sink { _ in
         continuation.resume(throwing: PortRemoved())
@@ -118,7 +182,7 @@ public final class ORSSerialDevice: Sendable, Device {
     }
   }
 
-  public func open<T>(for operation: () async throws -> T) async throws -> T {
+  public func open<T: Sendable>(for operation: @Sendable () async throws -> T) async throws -> T {
     try await open()
     let result: T
     do {

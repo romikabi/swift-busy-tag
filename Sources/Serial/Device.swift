@@ -5,15 +5,15 @@ public protocol Device: Sendable {
 
   func close() async throws
 
-  func open<T>(for operation: () async throws -> T) async throws -> T
+  func open<T: Sendable>(for operation: @Sendable () async throws -> T) async throws -> T
 
   func send(
-    _ string: some StringProtocol,
+    _ string: some StringProtocol & Sendable,
     expecting regex: NSRegularExpression,
     timeout: TimeInterval?
   ) async throws -> String
 
   func subscribe(
     expecting regex: NSRegularExpression
-  ) -> any AsyncSequence<String, Error>
+  ) async throws -> any SendableAsyncSequence<String, Error>
 }

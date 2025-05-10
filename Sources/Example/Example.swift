@@ -4,8 +4,29 @@ import SwiftUI
 @main
 struct Example {
   static func main() async throws {
+    let busyTag = await BusyTag()
+    var t = false
+    repeat {
+      do {
+        t.toggle()
+        if t {
+          try await busyTag.setColor(.green, to: .all)
+        } else {
+          try await busyTag.setColor(.blue, to: .all)
+        }
+      } catch {
+        print("error \(error)")
+      }
+      print("watin")
+      try await Task.sleep(for: .seconds(15))
+      print("wated")
+    } while true
+    try await Task.sleep(for: .seconds(60))
+  }
+
+  static func main1() async throws {
     /// Find the connected device
-    guard let busyTag = try await BusyTag() else { return }
+    let busyTag = await BusyTag()
 
     /// Disable all LEDs
     try await busyTag.setColor(hex: "000000", to: .all)

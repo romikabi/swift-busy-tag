@@ -3,7 +3,7 @@ import AppKit
 import SwiftUI
 
 extension BusyTag {
-  public func setColor(hex: some StringProtocol, to led: LED) async throws {
+  public func setColor(hex: some StringProtocol & Sendable, to led: LED) async throws {
     try await device.open {
       _ = try await device.send(
         "AT+SC=\(led.rawValue),\(hex.trimmingCharacters(in: ["#"]))",
@@ -19,7 +19,7 @@ extension BusyTag {
 }
 
 extension Color {
-  fileprivate var hex: String {
+  fileprivate var hex: some StringProtocol & Sendable {
     let color = NSColor(self)
     let rgb = color.usingColorSpace(.deviceRGB) ?? color
     let red = Int(rgb.redComponent * 255)
