@@ -1,7 +1,6 @@
 @preconcurrency import ORSSerial
 @preconcurrency import Combine
 @preconcurrency import Foundation
-import ConcurrencyExtras
 
 public actor ORSSerialDevice: Sendable, Device {
   private let delegate = Delegate()
