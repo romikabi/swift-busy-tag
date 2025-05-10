@@ -1,8 +1,9 @@
 import Serial
 
 public final class BusyTag: Sendable {
-  let device: Device
-  init(device: Device) {
+  public let device: Device
+
+  public init(device: Device) {
     self.device = device
   }
 }

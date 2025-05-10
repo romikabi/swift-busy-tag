@@ -17,7 +17,7 @@ import SwiftUI
 struct Example {
   static func main() async throws {
     /// Find the connected device
-    guard let busyTag = try await BusyTag() else { return }
+    let busyTag = await BusyTag()
 
     /// Disable all LEDs
     try await busyTag.setColor(hex: "000000", to: .all)
