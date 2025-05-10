@@ -3,10 +3,10 @@
 This is a library to control a [BusyTag](https://www.busy-tag.com/) device from Swift.
 
 Features include:
-[x] - Find the connected device
-[x] - Find the path to the connected device in the file system 
-[x] - Set the LED lining color
-[x] - Set the display image
+- [x] Find the connected device
+- [x] Find the path to the connected device in the file system 
+- [x] Set the LED lining color
+- [x] Set the display image
 
 ## Usage
 ```swift
@@ -41,4 +41,5 @@ struct Example {
 
 # See also
 
-* https://luxafor.helpscoutdocs.com/article/47-busy-tag-usb-cdc-command-reference-guide
+* [Busy Tag USB CDC Command Reference Guide](https://luxafor.helpscoutdocs.com/article/47-busy-tag-usb-cdc-command-reference-guide)
+* [ORSSerialPort](https://github.com/armadsen/ORSSerialPort) by [Andrew Madsen](https://github.com/armadsen)
